@@ -66,13 +66,18 @@ async def login(request: Request, response: Response, payload: LoginRequest):
     token_version = user.get("tokenVersion", 0)
     token = create_jwt_token(str(user["_id"]), user["email"], token_version)
 
-    # Set HTTP-only cookie
+    # Set HTTP-only cookie (secure over HTTPS or on Vercel)
+    is_https = (
+        request.url.scheme == "https"
+        or request.headers.get("x-forwarded-proto") == "https"
+        or os.getenv("VERCEL") == "1"
+    )
     response.set_cookie(
         key="Authorization",
         value=token,
         httponly=True,
         samesite="lax",
-        secure=settings.node_env == "production" or os.getenv("VERCEL") == "1",
+        secure=is_https,
         max_age=7 * 24 * 60 * 60,  # 7 days
         path="/",
     )
