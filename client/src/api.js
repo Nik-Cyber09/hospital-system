@@ -34,7 +34,7 @@ export async function apiRequest(path, options = {}) {
 
   if (!response.ok) {
     if (response.status === 401 && path !== '/api/auth/logout') window.dispatchEvent(new Event('carepoint:unauthorized'))
-    throw new ApiError(result.error || 'The request could not be completed.', response.status)
+    throw new ApiError(result.error || result.detail || 'The request could not be completed.', response.status)
   }
   return result
 }

@@ -26,6 +26,8 @@ Run `npm run lint` and `npm run build` to validate the client.
 
 The database starts with empty patient, doctor, appointment, and invoice collections. Add a doctor and a patient to begin scheduling visits; invoices can be created once a patient is on file.
 
+On Vercel, API calls remain same-origin at `/api/...`; the root deployment's rewrites send them to the Express service. Keep the Vite proxy for local development only.
+
 ## Important limitations
 
 This is a functional starter, not a production hospital information system:

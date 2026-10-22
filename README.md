@@ -1,84 +1,103 @@
 # Carepoint Hospital Management
 
-Carepoint is a small-clinic hospital-operations application with a React/Vite client, an Express API, MongoDB storage, and authenticated staff access.
+Carepoint is a modern clinic and hospital operations system built with a **Python (FastAPI)** backend, **React 19 + Vite** frontend, and **MongoDB** storage with secure authenticated staff and administrator access.
+
+## Architecture
+
+- **Backend (`/server`)**: Python 3.13 / FastAPI, Motor (Async MongoDB), Pydantic v2, Python-Jose (JWT), BCrypt.
+- **Frontend (`/client`)**: React 19, Vite, responsive clinic operations dashboard.
+- **Database**: MongoDB (Local service or MongoDB Atlas).
+
+---
 
 ## Prerequisites
 
-- Node.js 20.19+ (or 22.12+) and npm.
-- A MongoDB database and a database user with access only to the Carepoint database.
+1. **Python 3.13+**
+2. **Node.js 20+** and npm
+3. **MongoDB** running locally or a MongoDB Atlas URI
 
-## Configure secrets
+---
 
-1. **Rotate the MongoDB database password that was shared in chat before connecting this app.** Do not reuse the exposed password. Use the replacement credential in your local environment only.
-2. Copy `server/.env.example` to `server/.env`.
-3. Set `MONGODB_URI` to the rotated Atlas URI, including a database name. URL-encode special characters in the database password.
-4. Generate a signing secret and set `JWT_SECRET`:
+## Configuration
 
-   ```sh
-   node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
-   ```
-
-5. Set `CLIENT_ORIGIN=http://localhost:5173,http://127.0.0.1:5173` for local development (so either loopback URL works). Configure only the exact HTTPS client origin or origins in production.
-
-Never commit `.env` files, database credentials, or administrator passwords. Atlas network access and database-user privileges must be configured in Atlas; keep access restricted rather than allowing all IPs.
-
-## Install and run locally
-
-In separate terminals:
-
-```sh
-cd server
-npm install
-npm run dev
-```
-
-```sh
-cd client
-npm install
-npm run dev
-```
-
-Open the Vite URL (normally `http://localhost:5173`). Vite forwards `/api` requests to the local server on port 4000. The server must connect to MongoDB before it accepts requests.
-
-## Create the first administrator
-
-Set these temporary values in `server/.env`:
+In `server/.env`:
 
 ```dotenv
+NODE_ENV=development
+PORT=4000
+MONGODB_URI=mongodb://localhost:27017/carepoint
+JWT_SECRET=your-random-32-character-secret-key
+CLIENT_ORIGIN=http://127.0.0.1:5173,http://localhost:5173
+
+# Admin bootstrap credentials
 ADMIN_NAME=Clinic Administrator
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=a-unique-password-of-at-least-12-characters
+ADMIN_EMAIL=admin@hospital.local
+ADMIN_PASSWORD=AdminPassword123456
 ```
 
-Then, from `server/`, run:
+---
 
-```sh
-npm run create-admin
+## Quick Start
+
+### 1. Backend (Python FastAPI)
+
+From the project root:
+
+```powershell
+# Activate the virtual environment
+.\.venv\Scripts\Activate.ps1
+
+# Install requirements (already installed in .venv)
+pip install -r server\requirements.txt
+
+# Create the first administrator
+python server\scripts\create_admin.py
+
+# Run the FastAPI server (runs on port 4000)
+python -m uvicorn app.main:app --app-dir server --host 0.0.0.0 --port 4000 --reload
 ```
 
-The bootstrap command refuses to create a second administrator. Remove `ADMIN_PASSWORD` from `.env` after the command succeeds. Sign in through the app, then use the account menu to change the initial password. Administrators can create staff accounts from **Staff**; open registration is not available.
+### 2. Frontend (React / Vite)
 
-Patient, doctor, appointment, and invoice records support create, update, and delete actions. A patient or doctor cannot be deleted while another record refers to them; remove or reassign those references first.
+In a separate terminal:
 
-## Checks
-
-```sh
-cd server
-npm test
-```
-
-```sh
+```powershell
 cd client
-npm run lint
-npm run build
+npm install
+npm run dev
 ```
 
-For a single-server deployment, build the client and run the server with `NODE_ENV=production`; Express serves `client/dist`. Set `CLIENT_ORIGIN` to the actual HTTPS origin and configure TLS at the hosting layer.
+Open `http://localhost:5173` or `http://127.0.0.1:5173` in your browser. Vite automatically proxies `/api` calls to the Python FastAPI backend on `http://127.0.0.1:4000`.
 
-MongoDB uses the Node driver's default connection pool settings. For a single-clinic development deployment without measured concurrent traffic, the defaults avoid tuning arbitrary pool sizes; review Atlas connection metrics and request latency before making workload-driven adjustments.
+---
 
-During load testing and production monitoring, watch Atlas connection counts and API latency. Repeated MongoDB driver `ConnectionCheckOutFailed` or rapid `ConnectionCreated` events warrant investigation before changing the default pool settings.
+## Default Administrator Credentials
 
-## Security and clinical-use limitations
+- **Email**: `admin@hospital.local`
+- **Password**: `AdminPassword123456`
+             
+*(You can change the password anytime via the Account Security menu in the dashboard or create additional staff members under the Staff tab).*
 
-This is a starting point, **not a certified or production-ready electronic health record**. Do not enter real patient, health, billing, or other sensitive data until the system has undergone a full security, privacy, operational, and jurisdiction-specific compliance review. It does not yet provide encryption-at-rest policy, MFA, account recovery, audit/event history, automated backups, availability commitments, clinical safety controls, or a payment processor. Configure Atlas backups and retention separately and obtain appropriate legal/security review before any clinical deployment.
+---
+
+## System Capabilities
+
+- **Authentication & Security**: HTTP-only secure JWT cookies, BCrypt password hashing (12 rounds), token version invalidation on password change, login rate-limiting, and CSRF origin verification.
+- **Patient Management**: Full demographic records, clinical condition status, assigned physician linking.
+- **Doctor & Specialist Registry**: Specialties, duty availability, on-duty/off-duty statuses.
+- **Appointment Scheduling**: Real-time patient-doctor booking with confirmation, waiting, and completion state toggling.
+- **Invoicing & Billing**: Patient charge records with instant pending/paid status toggling.
+- **Relational Integrity**: Enforced prevention of orphaned records (cannot delete doctors or patients while active consultations, appointments, or invoices reference them).
+- **Staff Administration**: Administrator-controlled user account provisioning for hospital staff.
+
+---
+
+## Running Verification Tests
+
+To verify the entire backend API suite:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir server --port 4000
+# Run the end-to-end integration test
+.\.venv\Scripts\python.exe C:\Users\asus\.gemini\antigravity\brain\43ec9f37-4957-4224-a5ce-8eb0fe2dc33a\scratch\test_backend.py
+```
